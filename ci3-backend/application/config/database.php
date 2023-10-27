@@ -73,13 +73,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+
+// // Load the CodeIgniter instance
+// $CI =& get_instance();
+//
+// // Load the configuration file (config.json)
+// $CI->config->load('config', true);
+
+// Access the database configuration settings from config.json
+$config = json_decode(file_get_contents(APPPATH . '../../backend-rust/config.json'), true);
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => '',
-	'password' => '',
-	'database' => '',
-	'dbdriver' => 'mysqli',
+	'hostname' => $config['host'],
+	'username' => $config['username'],
+	'password' => $config['password'],
+  'database' => $config['database'],
+  'port'     => $config['port'],
+	'dbdriver' => 'postgre',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => (ENVIRONMENT !== 'production'),
