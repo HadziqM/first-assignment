@@ -17,41 +17,89 @@ class Api extends CI_Controller {
         //     ->set_content_type('application/json')
         //     ->set_output(json_encode($data));
   }
-  public function get_name($id) {
-        // $id contains the dynamic value from the URL segment
-        // Use $id to process and respond to the request
-        // For example, retrieve data based on $id and return it as JSON
-        $data = array('name'=> $id);
+  public  function list() {
+    $this->load->database();
+    $this->db->select('produk.name as nama, produk.harga as harga, kategori.name as kategori, produk.id as id');
+    $this->db->from('produk');
+    $this->db->join('kategori', 'kategori.id = produk.kategori_id');
+    $this->db->join('status', 'status.id = produk.status_id');
+    $this->db->where('status.name', 'bisa dijual');
+    $query = $this->db->get();
+
+    if ($query->num_rows() > 0) {
+        $result = $query->result();
         $this->output
             ->set_content_type('application/json')
-            ->set_output(json_encode($data));
+            ->set_output(json_encode($result));
+
+    }
   }
-  public function post() {
-        // Check if the request is a POST request
-        if ($this->input->server('REQUEST_METHOD') === 'POST') {
-            // Retrieve the JSON data from the request body
-            $input_data = json_decode(file_get_contents('php://input'));
+  public function delete($id) {
+    $this->load->database();
+    $this->db->where('id',$id);
+    $this->db->delete('produk');
+        $this->output
+            ->set_status_header(200);
+  }
 
-            if ($input_data !== null) {
-                // Process the JSON data
-                // For example, update data in the database with $input_data
+  public function edit() {
+    if ($this->input->server('REQUEST_METHOD') === 'POST') {
+      $data = json_decode(file_get_contents('php://input'));
+      if ($data !== null) {
+        $this->load->database();
+        $this->db->where('id',$data->id);
+        $table = array(
+           'name' => $data->nama,
+           'harga' => $data->harga
+        );
+        $this->db->update('produk',$table);
+          $this->output
+            ->set_status_header(200);
 
-                // Respond with a JSON success message
-                $response = array('message' => 'Data updated successfully');
-                $this->output
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode($response));
-            } else {
-                // Invalid JSON data
-                $this->output
-                    ->set_status_header(400)
-                    ->set_output('Invalid JSON data');
-            }
         } else {
-            // Invalid request method
+            // Invalid JSON data
             $this->output
-                ->set_status_header(405)
-                ->set_output('Method not allowed');
+                ->set_status_header(400)
+                ->set_output('Invalid JSON data');
+        }
+    } else {
+        // Invalid request method
+        $this->output
+            ->set_status_header(405)
+            ->set_output('Method not allowed');
+    }
+
+  }
+
+  public function add() {
+    if ($this->input->server('REQUEST_METHOD') === 'POST') {
+      $data = json_decode(file_get_contents('php://input'));
+      if ($data !== null) {
+        $this->load->database();
+        $this->db->select('id')->from('kategori')->where('name', $data->kategori)->limit(1);
+        $query = $this->db->get();
+        $kategori_id = $query->row()->id;
+        $query_data = array(
+          'name' => $data->nama,
+          'harga' => $data->harga,
+          'kategori_id' => $kategori_id,
+          'status_id' => 9
+        );
+        $this->db->insert('produk', $query_data);
+
+        $this->output
+            ->set_status_header(200);
+        } else {
+              // Invalid JSON data
+              $this->output
+                  ->set_status_header(400)
+                  ->set_output('Invalid JSON data');
+          }
+      } else {
+          // Invalid request method
+          $this->output
+              ->set_status_header(405)
+              ->set_output('Method not allowed');
     }
 
   }
